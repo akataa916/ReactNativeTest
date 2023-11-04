@@ -28,7 +28,7 @@ const styles = StyleSheet.create({
     },
 });
 const Details = ({route}: TDetails) => {
-    const user = useContext(UserContext);
+    const {user} = useContext(UserContext);
     const [isFavorite, setIsFavorite] = useState<boolean>(false);
 
     useEffect(() => {

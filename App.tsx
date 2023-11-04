@@ -1,4 +1,4 @@
-import React, {createContext, Dispatch, useEffect, useState} from 'react';
+import React, {createContext, useEffect, useState} from 'react';
 //android permission FCM
 import {PermissionsAndroid} from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
@@ -24,9 +24,7 @@ export type TPrimaryStackScreen = {
 
 export type TPrimaryTabs = {
     Movies: undefined;
-    Auth: {
-        setUser: Dispatch<React.SetStateAction<TUser>>;
-    };
+    Auth: undefined;
 };
 
 const PrimaryScreenStack = createNativeStackNavigator<TPrimaryStackScreen>();
@@ -37,7 +35,13 @@ export type TUser = {
     name: string | null;
     photo: string | null;
 } | null;
-export const UserContext = createContext<TUser>(null);
+export const UserContext = createContext<{
+    user: TUser;
+    setUser: React.Dispatch<React.SetStateAction<TUser>>;
+}>({
+    user: null,
+    setUser: () => {},
+});
 
 const HomeStackScreen = () => {
     return (
@@ -78,7 +82,7 @@ const App = () => {
     }, []);
 
     return (
-        <UserContext.Provider value={user}>
+        <UserContext.Provider value={{user, setUser}}>
             <NavigationContainer>
                 <PrimaryTabs.Navigator screenOptions={{headerShown: false}}>
                     <PrimaryTabs.Screen
@@ -88,9 +92,6 @@ const App = () => {
                     <PrimaryTabs.Screen
                         name="Auth"
                         component={Auth}
-                        initialParams={{
-                            setUser,
-                        }}
                         options={{
                             title: 'Auth',
                             headerStyle: {

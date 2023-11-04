@@ -1,11 +1,11 @@
-import React, {useEffect, useState} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {Button, SafeAreaView, ScrollView, Text} from 'react-native';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {TPrimaryTabs} from '../App';
+import {TPrimaryTabs, UserContext} from '../App';
 
 GoogleSignin.configure({
     webClientId:
@@ -13,8 +13,8 @@ GoogleSignin.configure({
 });
 
 type TAuthScreen = NativeStackScreenProps<TPrimaryTabs, 'Auth'>;
-const Auth = ({route}: TAuthScreen) => {
-    const {setUser} = route.params;
+const Auth = (_: TAuthScreen) => {
+    const {setUser} = useContext(UserContext);
 
     //const [user, setUser] = useState({});
     const [signedIn, setSignedIn] = useState(false);
