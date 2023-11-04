@@ -4,12 +4,18 @@ import {GoogleSignin} from '@react-native-google-signin/google-signin';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {TPrimaryTabs} from '../App';
 
 GoogleSignin.configure({
     webClientId:
         '774384638847-8ovmv177v11r2gep8h77vjpmlirpvkc9.apps.googleusercontent.com',
 });
-const Auth = () => {
+
+type TAuthScreen = NativeStackScreenProps<TPrimaryTabs, 'Auth'>;
+const Auth = ({route}: TAuthScreen) => {
+    const {setUser} = route.params;
+
     //const [user, setUser] = useState({});
     const [signedIn, setSignedIn] = useState(false);
     const [email, setEmail] = useState<any | null>('');
@@ -42,6 +48,7 @@ const Auth = () => {
             })
             .catch(error => console.log(error));
         setSignedIn(false);
+        setUser(null);
     };
 
     async function onGoogleButtonPress() {
@@ -108,6 +115,12 @@ const Auth = () => {
                                 });
                             //getCurrentUser();
                             setSignedIn(true);
+
+                            setUser({
+                                email: emailid,
+                                name: nameid,
+                                photo: photoid,
+                            });
                         })
                     }
                 />

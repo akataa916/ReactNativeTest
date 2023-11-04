@@ -6,12 +6,12 @@ import React, {
     Text,
     TouchableOpacity,
 } from 'react-native';
-import {THomeStackScreen} from '../App';
+import {TPrimaryStackScreen} from '../App';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {TMovie, usePopularMovies} from './apis/moviedb';
 import {useCallback} from 'react';
 
-type THome = NativeStackScreenProps<THomeStackScreen, 'Home'>;
+type THome = NativeStackScreenProps<TPrimaryStackScreen, 'Home'>;
 
 const styles = StyleSheet.create({
     container: {

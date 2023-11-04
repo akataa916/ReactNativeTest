@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {createContext, Dispatch, useEffect, useState} from 'react';
 //android permission FCM
 import {PermissionsAndroid} from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
@@ -8,10 +8,11 @@ import Home from './src/Home';
 import Details from './src/Details';
 import Auth from './src/Auth';
 import {useMessaging} from './src/utils/bootstrap';
+import {getUserFromLocal} from './src/utils/async-storage';
 
 PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
 
-export type THomeStackScreen = {
+export type TPrimaryStackScreen = {
     Home: undefined;
     Details: {
         title: string;
@@ -21,8 +22,22 @@ export type THomeStackScreen = {
     };
 };
 
-const PrimaryScreenStack = createNativeStackNavigator<THomeStackScreen>();
-const PrimaryTabs = createBottomTabNavigator();
+export type TPrimaryTabs = {
+    Movies: undefined;
+    Auth: {
+        setUser: Dispatch<React.SetStateAction<TUser>>;
+    };
+};
+
+const PrimaryScreenStack = createNativeStackNavigator<TPrimaryStackScreen>();
+const PrimaryTabs = createBottomTabNavigator<TPrimaryTabs>();
+
+export type TUser = {
+    email: string;
+    name: string | null;
+    photo: string | null;
+} | null;
+export const UserContext = createContext<TUser>(null);
 
 const HomeStackScreen = () => {
     return (
@@ -49,27 +64,48 @@ const HomeStackScreen = () => {
 const App = () => {
     useMessaging();
 
+    const [user, setUser] = useState<TUser>(null);
+
+    useEffect(() => {
+        const setUserFromLocal = async () => {
+            const userFromLocal = await getUserFromLocal();
+            if (userFromLocal !== null) {
+                setUser(userFromLocal);
+            }
+        };
+
+        setUserFromLocal().catch(err => console.log(err));
+    }, []);
+
     return (
-        <NavigationContainer>
-            <PrimaryTabs.Navigator screenOptions={{headerShown: false}}>
-                <PrimaryTabs.Screen name="Movies" component={HomeStackScreen} />
-                <PrimaryTabs.Screen
-                    name="Auth"
-                    component={Auth}
-                    options={{
-                        title: 'Auth',
-                        headerStyle: {
-                            backgroundColor: '#000',
-                        },
-                        headerTintColor: '#fff',
-                        headerTitleStyle: {
-                            fontWeight: 'bold',
-                            fontSize: 20,
-                        },
-                    }}
-                />
-            </PrimaryTabs.Navigator>
-        </NavigationContainer>
+        <UserContext.Provider value={user}>
+            <NavigationContainer>
+                <PrimaryTabs.Navigator screenOptions={{headerShown: false}}>
+                    <PrimaryTabs.Screen
+                        name="Movies"
+                        component={HomeStackScreen}
+                    />
+                    <PrimaryTabs.Screen
+                        name="Auth"
+                        component={Auth}
+                        initialParams={{
+                            setUser,
+                        }}
+                        options={{
+                            title: 'Auth',
+                            headerStyle: {
+                                backgroundColor: '#000',
+                            },
+                            headerTintColor: '#fff',
+                            headerTitleStyle: {
+                                fontWeight: 'bold',
+                                fontSize: 20,
+                            },
+                        }}
+                    />
+                </PrimaryTabs.Navigator>
+            </NavigationContainer>
+        </UserContext.Provider>
     );
 };
 
