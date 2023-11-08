@@ -1,6 +1,5 @@
 import React, {createContext, useEffect, useState} from 'react';
-//android permission FCM
-import {PermissionsAndroid} from 'react-native';
+import {PermissionsAndroid, Platform} from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
@@ -10,7 +9,11 @@ import Auth from './src/Auth';
 import {useMessaging} from './src/utils/bootstrap';
 import {getUserFromLocal} from './src/utils/async-storage';
 
-PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
+if (Platform.OS === 'android') {
+    PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+    );
+}
 
 export type TPrimaryStackScreen = {
     Home: undefined;

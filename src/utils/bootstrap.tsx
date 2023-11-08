@@ -1,33 +1,39 @@
 import {useEffect} from 'react';
 import messaging from '@react-native-firebase/messaging';
-import {Alert} from 'react-native';
+import {Alert, Platform} from 'react-native';
 
 export const useMessaging = () => {
-  useEffect(() => {
-    let messageInit = messaging();
-    messageInit.registerDeviceForRemoteMessages();
+    useEffect(() => {
+        let messageInit = messaging();
 
-    const unsubscribe = messageInit.onMessage(async remoteMessage => {
-      Alert.alert('A new FCM message arrived!', JSON.stringify(remoteMessage));
-    });
+        if (Platform.OS === 'android') {
+            messageInit.registerDeviceForRemoteMessages();
+        }
 
-    messageInit.onNotificationOpenedApp(remoteMessage => {
-      console.log(
-        'Notification caused app to open from background state:',
-        remoteMessage.notification,
-      );
-    });
+        const unsubscribe = messageInit.onMessage(async remoteMessage => {
+            Alert.alert(
+                'A new FCM message arrived!',
+                JSON.stringify(remoteMessage),
+            );
+        });
 
-    // Check whether an initial notification is available
-    messageInit.getInitialNotification().then(remoteMessage => {
-      if (remoteMessage) {
-        console.log(
-          'Notification caused app to open from quit state:',
-          remoteMessage.notification,
-        );
-      }
-    });
+        messageInit.onNotificationOpenedApp(remoteMessage => {
+            console.log(
+                'Notification caused app to open from background state:',
+                remoteMessage.notification,
+            );
+        });
 
-    return unsubscribe;
-  }, []);
+        // Check whether an initial notification is available
+        messageInit.getInitialNotification().then(remoteMessage => {
+            if (remoteMessage) {
+                console.log(
+                    'Notification caused app to open from quit state:',
+                    remoteMessage.notification,
+                );
+            }
+        });
+
+        return unsubscribe;
+    }, []);
 };

@@ -1,4 +1,4 @@
-import React, {useContext, useEffect, useState} from 'react';
+import React, {useCallback, useContext} from 'react';
 import {Button, SafeAreaView, ScrollView, Text} from 'react-native';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
 import auth from '@react-native-firebase/auth';
@@ -14,126 +14,79 @@ GoogleSignin.configure({
 
 type TAuthScreen = NativeStackScreenProps<TPrimaryTabs, 'Auth'>;
 const Auth = (_: TAuthScreen) => {
-    const {setUser} = useContext(UserContext);
+    const {user, setUser} = useContext(UserContext);
 
-    //const [user, setUser] = useState({});
-    const [signedIn, setSignedIn] = useState(false);
-    const [email, setEmail] = useState<any | null>('');
-    const [name, setName] = useState<any | null>('');
-    const [photo, setPhoto] = useState<any | null>('');
+    const signOut = useCallback(async () => {
+        try {
+            await GoogleSignin.signOut();
+            await AsyncStorage.removeItem('User');
+            setUser(null);
+        } catch (error) {
+            console.log(`Error signing out: ${error}`);
+        }
+    }, [setUser]);
 
-    useEffect(() => {
-        AsyncStorage.getItem('User').then(res => {
-            console.log('user', res);
-            if (res == null) {
-                console.log('user not logged in');
-            } else {
-                const userData = JSON.parse(res);
-                console.log(JSON.parse(res).email);
-                setEmail(userData.email);
-                setName(userData.name);
-                setSignedIn(true);
+    const onGoogleButtonPress = useCallback(async () => {
+        try {
+            await GoogleSignin.hasPlayServices({
+                showPlayServicesUpdateDialog: true,
+            });
+            const {idToken} = await GoogleSignin.signIn();
+            const googleCredential =
+                auth.GoogleAuthProvider.credential(idToken);
+            const credential = await auth().signInWithCredential(
+                googleCredential,
+            );
+
+            if (!credential?.user?.email) {
+                throw Error('Google sign in failed - user email not available');
             }
-        });
-    });
 
-    const signOut = () => {
-        AsyncStorage.removeItem('User');
-        setSignedIn(false);
-        GoogleSignin.signOut()
-            .then(res => {
-                setEmail(null);
-                setName(null);
-                setPhoto(null);
-            })
-            .catch(error => console.log(error));
-        setSignedIn(false);
-        setUser(null);
-    };
+            const document = await firestore()
+                .collection('Users')
+                .doc(credential.user.email)
+                .get();
 
-    async function onGoogleButtonPress() {
-        await GoogleSignin.hasPlayServices({
-            showPlayServicesUpdateDialog: true,
-        });
-        const {idToken} = await GoogleSignin.signIn();
-        const googleCredential = auth.GoogleAuthProvider.credential(idToken);
-        return auth().signInWithCredential(googleCredential);
-    }
+            if (!document.exists) {
+                await firestore()
+                    .collection('Users')
+                    .doc(credential.user.email)
+                    .set({
+                        email: credential.user.email,
+                        name: credential.user.displayName,
+                        photo: credential.user.photoURL,
+                        favourites: [],
+                    });
+            }
+
+            await AsyncStorage.setItem(
+                'User',
+                JSON.stringify({
+                    email: credential.user.email,
+                    name: credential.user.displayName,
+                    photo: credential.user.photoURL,
+                }),
+            );
+
+            setUser({
+                email: credential.user.email,
+                name: credential.user.displayName,
+                photo: credential.user.photoURL,
+            });
+        } catch (error) {
+            console.log(`Error signing in: ${error}`);
+        }
+    }, [setUser]);
 
     return (
         <SafeAreaView>
-            {!signedIn ? (
-                <Button
-                    title="Google Sign-In"
-                    onPress={() =>
-                        onGoogleButtonPress().then(res => {
-                            // console.log('Signed in with Google!', res.user.email);
-                            const emailid = res.user.email;
-                            const nameid = res.user.displayName;
-                            const photoid = res.user.photoURL;
-
-                            if (emailid === null) {
-                                throw Error(
-                                    'Found null email id upon authentication',
-                                );
-                            }
-
-                            setEmail(emailid);
-                            setName(nameid);
-                            setPhoto(photoid);
-                            //const movies = JSON.parse(AsyncStorage.getItem(emailid));
-                            // console.log('movies', movies);
-                            AsyncStorage.setItem(
-                                'User',
-                                JSON.stringify({
-                                    email: emailid,
-                                    name: nameid,
-                                    photo: photoid,
-                                }),
-                            );
-
-                            firestore()
-                                .collection('Users')
-                                .doc(emailid)
-                                .get()
-                                .then(res => {
-                                    if (res.exists) {
-                                        console.log('user already exists');
-                                    } else {
-                                        console.log('adding new user', emailid);
-
-                                        firestore()
-                                            .collection('Users')
-                                            .doc(emailid)
-                                            .set({
-                                                email: emailid,
-                                                name: nameid,
-                                                photo: photoid,
-                                                favourites: [],
-                                            });
-                                    }
-                                });
-                            //getCurrentUser();
-                            setSignedIn(true);
-
-                            setUser({
-                                email: emailid,
-                                name: nameid,
-                                photo: photoid,
-                            });
-                        })
-                    }
-                />
+            {user === null ? (
+                <Button title="Google Sign-In" onPress={onGoogleButtonPress} />
             ) : (
                 <ScrollView>
-                    <Text>Email - {email}</Text>
-                    <Text>Name - {name}</Text>
-                    <Button
-                        title="Log out"
-                        onPress={() => {
-                            signOut();
-                        }}
-                    />
+                    <Text>Email - {user.email}</Text>
+                    <Text>Name - {user.name}</Text>
+                    <Button title="Log out" onPress={signOut} />
                 </ScrollView>
             )}
         </SafeAreaView>
