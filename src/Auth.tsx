@@ -5,11 +5,11 @@ import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import Config from 'react-native-config';
 import {TPrimaryTabs, UserContext} from '../App';
 
 GoogleSignin.configure({
-    webClientId:
-        '774384638847-8ovmv177v11r2gep8h77vjpmlirpvkc9.apps.googleusercontent.com',
+    webClientId: Config.GOOGLE_SIGNIN_CLIENT_ID,
 });
 
 type TAuthScreen = NativeStackScreenProps<TPrimaryTabs, 'Auth'>;

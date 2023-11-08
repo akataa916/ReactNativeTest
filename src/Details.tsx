@@ -65,6 +65,25 @@ const Details = ({route}: TDetails) => {
         });
     }, [route.params.title, user?.email]);
 
+    const removeFromFavorites = useCallback(async () => {
+        if (!user?.email) {
+            console.log(
+                'Error: user not logged in while trying to remove from favorites',
+            );
+            return;
+        }
+        setIsFavorite(false);
+        const movies = new Set(await getFavoritesForUser(user.email));
+        movies.delete(route.params.title);
+        await AsyncStorage.setItem(
+            user.email,
+            JSON.stringify(Array.from(movies)),
+        );
+        await firestore().collection('Users').doc(user.email).update({
+            favourites: movies,
+        });
+    }, [route.params.title, user?.email]);
+
     return (
         <SafeAreaView style={styles.container}>
             <Image
@@ -81,7 +100,10 @@ const Details = ({route}: TDetails) => {
                 Rating - {route.params.vote_average}
             </Text>
             {isFavorite ? (
-                <Button title="Marked as favourite" />
+                <Button
+                    title="Marked as favourite"
+                    onPress={removeFromFavorites}
+                />
             ) : (
                 <Button title="Add to favourite" onPress={addToFavorites} />
             )}

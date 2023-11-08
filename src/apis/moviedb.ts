@@ -1,4 +1,5 @@
 import {useEffect, useMemo, useState} from 'react';
+import Config from 'react-native-config';
 
 export type TMovie = {
     adult: boolean;
@@ -24,9 +25,6 @@ type TPopularMovies = {
     total_results: number;
 };
 
-const movieDBToken =
-    'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI5ZjkzODFiYTk4MzY1NmQxZDUzMDY0ZDg0NzY5Nzc1MSIsInN1YiI6IjY1MzhjYzk5OTQ2MzE4MDBjNmI2MzA1MCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.77HYGnryA5qwmXEQc78eGDHArRjZFhHMdJUHfS_lIJc';
-
 const movieDBBaseURL = 'https://api.themoviedb.org/3/movie';
 
 export const usePopularMovies = () => {
@@ -48,7 +46,7 @@ export const usePopularMovies = () => {
             method: 'GET',
             headers: {
                 accept: 'application/json',
-                Authorization: `Bearer ${movieDBToken}`,
+                Authorization: `Bearer ${Config.MOVIE_DB_TOKEN}`,
             },
         }),
         [],
